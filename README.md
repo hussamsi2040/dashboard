@@ -9,20 +9,60 @@ Bu proje, çevrimiçi oyun platformları için oyuncu davranışlarını, katıl
 ## Özellikler (Features)
 
 *   **İnteraktif Panel:** Streamlit ile oluşturulmuş, kullanıcı dostu bir web arayüzü.
-*   **Kapsamlı Metrikler:** Oyuncu demografisi, oynama süresi, oturum sıklığı, gelir (ARPU, ARPPU, LTV), başarımlar, sosyal etkileşim (arkadaşlar, loncalar) ve teknik performans (FPS, çökmeler) metriklerini içerir.
+*   **Kapsamlı Metrikler:** Oyuncu demografisi, oynama süresi, oturum sıklığı, gelir (ARPU, ARPPU, LTV), başarımlar, sosyal etkileşim (arkadaşlar, loncalar) ve teknik performans (FPS, çökmeler) gibi temel metrikleri içerir.
 *   **Gelişmiş Analiz Sayfaları:**
-    *   **Genel Bakış:** Temel metrikler, tür/etkileşim dağılımları ve segmentlenebilir tutundurma eğrisi.
-    *   **Oyuncu Analizi:** Demografik dağılımlar (yaş, cinsiyet) ve katılım analizi (oynama süresi vs seviye).
-    *   **Gelir Analizi:** Dönüşüm oranı, ARPPU, LTV, harcama segmentasyonu (cihaz, etkileşim) ve ödeme yapan kullanıcı harcama dağılımı.
-    *   **Oturum Analizi:** Oturum sıklığı/süresi dağılımları, zaman içindeki etkileşim ve lonca üyeliğine göre oturum analizi.
-    *   **Başarı Takibi:** Ortalama başarı sayısı, tamamlama oranı ve başarı dağılımı.
-    *   **Teknik Performans:** Ortalama FPS, çökme sayısı, cihaza ve lonca üyeliğine göre performans.
-    *   **Sosyal Analiz:** Arkadaş sayısı, lonca üyeliği dağılımları, sosyal faktörlere göre etkileşim ve harcama.
-    *   **Kohort Analizi:** Oyuncuların kayıt haftasına göre haftalık tutundurma oranlarını gösteren ısı haritası (heatmap).
-    *   **Oyuncu Segmentasyonu:** Davranışsal metrikler kullanılarak K-Means kümeleme ile oyuncu segmentleri oluşturma ve analiz etme.
-*   **Filtreleme:** Tarih aralığı, oyun türü, oyun zorluğu, cihaz ve lokasyona göre verileri filtreleme imkanı.
-*   **Veri İndirme:** Filtrelenmiş verileri CSV formatında indirme butonu.
+    *   **Genel Bakış:**
+        *   Temel performans göstergeleri (KPI): Toplam oyuncu, aktif oyuncu sayısı, toplam gelir, ARPU (Oyuncu Başına Ortalama Gelir), ortalama oynama süresi, haftalık oturum sayısı ve genel tutundurma oranı.
+        *   Oyuncu dağılımları: Oyun türü ve katılım seviyesine (Engagement Level) göre oyuncu sayılarının görselleştirilmesi (pasta ve çubuk grafikler).
+        *   Segmentlenebilir tutundurma eğrisi: Oyuncuların kayıttan sonraki günlere göre aktif kalma oranlarını gösteren çizgi grafik. Bu eğri, cihaz, oyun türü veya etkileşim seviyesi gibi faktörlere göre filtrelenebilir.
+    *   **Oyuncu Analizi:**
+        *   Demografik dağılımlar: Oyuncuların yaş ve cinsiyet dağılımlarını gösteren histogram ve pasta grafikleri.
+        *   Detaylı katılım analizi: Oyuncuların oynama süresi ile oyuncu seviyesi arasındaki ilişkiyi gösteren dağılım grafiği (scatter plot). Noktaların rengi katılım seviyesini, boyutu ise açılan başarı sayısını temsil eder.
+    *   **Gelir Analizi:**
+        *   Monetizasyon metrikleri: Ödeme yapan oyuncu sayısı, dönüşüm oranı (%), ARPPU (Ödeme Yapan Oyuncu Başına Ortalama Gelir) ve LTV (Yaşam Boyu Değer - mevcut veriyle ARPU olarak hesaplanır).
+        *   Harcama segmentasyonu: Ortalama harcamanın cihaz türü ve etkileşim seviyesine göre nasıl değiştiğini gösteren çubuk grafikler.
+        *   Ödeme yapan kullanıcı harcama dağılımı: Ödeme yapmış olan oyuncuların toplam harcama miktarlarının dağılımını gösteren histogram.
+    *   **Oturum Analizi:**
+        *   Oturum metrikleri: Haftalık oturum sayısı ve ortalama oturum süresi (dakika) dağılımlarını gösteren histogramlar.
+        *   Zaman içinde etkileşim: Kayıttan beri geçen gün sayısına göre ortalama oynama süresinin nasıl değiştiğini gösteren çizgi grafik.
+        *   Gruplara göre etkileşim: Lonca üyesi olan ve olmayan oyuncuların ortalama oturum sürelerini karşılaştıran kutu grafiği (box plot).
+    *   **Başarı Takibi:**
+        *   Başarı metrikleri: Ortalama açılan başarı sayısı, maksimum açılan başarı sayısı ve genel başarı tamamlama oranı (%).
+        *   Başarı dağılımı: Oyuncuların ne kadar başarı açtığını gösteren histogram.
+    *   **Teknik Performans:**
+        *   Performans metrikleri: Ortalama FPS (Kare Hızı) ve toplam/ortalama çökme sayısı.
+        *   Dağılımlar: Ortalama FPS ve oyuncu başına düşen çökme sayısının dağılımlarını gösteren histogram ve çubuk grafikler.
+        *   Cihaz ve Lonca Bazında Performans: Ortalama FPS ve çökme sayısının farklı cihaz türlerine ve lonca üyeliği durumuna göre karşılaştırılması (çubuk grafikler).
+    *   **Sosyal Analiz:**
+        *   Sosyal metrikler: Ortalama arkadaş sayısı ve lonca üyeliği oranı.
+        *   Dağılımlar: Arkadaş sayısı dağılımı (histogram) ve lonca üyeliği durumu (pasta grafiği).
+        *   Sosyal Faktörlerin Etkisi: Lonca üyeliğinin oynama süresi ve harcama üzerindeki etkisini gösteren kutu grafikleri. Arkadaş sayısı ile oynama süresi arasındaki ilişkiyi gösteren dağılım grafiği.
+    *   **Kohort Analizi:**
+        *   Haftalık tutundurma: Oyuncuların kaydoldukları haftaya (kohort) göre, sonraki haftalarda ne kadarının aktif kaldığını gösteren ısı haritası (heatmap).
+        *   Kohort büyüklükleri: Her bir kayıt haftasındaki toplam oyuncu sayısını gösteren tablo.
+    *   **Oyuncu Segmentasyonu:**
+        *   K-Means kümeleme: Oyuncuları oynama süresi, harcama, oturum sıklığı gibi davranışsal metrikler kullanarak otomatik olarak gruplara (segmentlere) ayırma.
+        *   Segment görselleştirmesi: Oluşturulan segmentlerin oynama süresi ve harcama gibi eksenlerde nasıl konumlandığını gösteren dağılım grafiği.
+        *   Segment profilleri: Her bir segmentin ortalama metrik değerlerini gösteren özet tablo.
+        *   Segment dağılımı: Toplam oyuncu tabanının segmentlere göre dağılımını gösteren pasta grafiği.
+*   **Filtreleme:** Tarih aralığı, oyun türü, oyun zorluğu, cihaz ve lokasyona (ilk 10 ve diğerleri) göre verileri filtreleme imkanı.
+*   **Veri İndirme:** Filtrelenmiş güncel verileri CSV formatında indirme butonu.
 *   **Türkçe Dil Desteği:** Panel arayüzü ve metrikler Türkçe olarak sunulmaktadır.
+
+## Öneriler (Recommendations)
+
+Paneldeki analizlere dayanarak, Ürün ve Pazarlama ekiplerinin aşağıdaki noktaları dikkate alması önerilir:
+
+1.  **Gözlem:** Oyuncuların önemli bir kısmı ilk birkaç hafta içinde oyunu bırakmaktadır (Kohort Analizi).
+    **Öneri:** İlk 1-2 hafta içinde hedeflenmiş başlangıç kampanyaları, görevler ve ödüller uygulayarak erken dönem etkileşimi artırın ve başlangıçtaki oyuncu kaybını (churn) azaltın.
+2.  **Gözlem:** Lonca üyeliği, daha yüksek etkileşim ve harcama ile ilişkili görünmektedir (Sosyal Analiz, Gelir Analizi).
+    **Öneri:** Lonca bulma ve katılma özelliklerini oyun içinde daha belirgin hale getirin. Bu sosyal faktörü daha da güçlendirmek için lonca ile ilgili daha fazla aktivite ve ödül eklemeyi düşünün.
+3.  **Gözlem:** Harcamalar belirli bir oyuncu segmentinde yoğunlaşmakta ve genel dönüşüm oranı mütevazı seviyededir (Gelir Analizi).
+    **Öneri:** K-Means ile belirlenen yüksek harcama segmentlerine özel IAP (uygulama içi satın alma) teklifleri geliştirin. İlk satın almayı teşvik etmek ve genel dönüşüm oranını artırmak için başlangıç teklifleri veya paketlerle deneyler yapın.
+4.  **Gözlem:** Farklı davranışlara sahip belirgin oyuncu segmentleri mevcuttur (Oyuncu Segmentasyonu).
+    **Öneri:** Oyuncu segmentlerine göre farklılaştırılmış özellikler, iletişim stratejileri veya etkinlik katılım yolları tasarlayın (örneğin, etkileşimli ancak harcama yapmayan oyuncular için kozmetik teklifler, yüksek değerli oyuncular için rekabetçi etkinlikler).
+5.  **Gözlem:** Harcama ve performans cihaza göre değişiklik göstermektedir (Gelir Analizi, Teknik Performans).
+    **Öneri:** Cihazlar arasındaki harcama farklılıklarının nedenlerini araştırın (ör. arayüz farklılıkları, ödeme kolaylığı). Özellikle düşük metrikler gösteren cihazlarda performansı (FPS, çökme oranları) optimize edin.
 
 ## Veri Seti (Dataset)
 
@@ -53,11 +93,11 @@ Panel, `data/online_gaming_behavior_dataset.csv` dosyasını kullanır. Bu CSV d
 4.  **Sanal Ortamı Aktifleştirin (Activate the Virtual Environment):**
     *   Linux/macOS: `source .venv/bin/activate`
     *   Windows: `.venv\Scripts\activate`
-5.  **Gerekli Paketleri Yükleyin (Install Dependencies):**
+5.  **Gerekli Paketleri Yükleyin (Install Dependencies):** `requirements.txt` dosyası sağlandığı için:
     ```bash
-    pip install pandas numpy streamlit plotly scikit-learn
+    pip install -r requirements.txt
     ```
-    *(Alternatif olarak, eğer bir `requirements.txt` dosyası oluşturulursa: `pip install -r requirements.txt`)*
+    *(Eğer `requirements.txt` yoksa veya güncel değilse: `pip install pandas numpy streamlit plotly scikit-learn`)*
 
 ## Paneli Çalıştırma (Running the Dashboard)
 
@@ -82,13 +122,15 @@ Panel, `data/online_gaming_behavior_dataset.csv` dosyasını kullanır. Bu CSV d
 │   └── online_gaming_behavior_dataset.csv  # Oluşturulan veri seti (Generated dataset)
 ├── app.py                  # Streamlit panel uygulaması kodu (Dashboard application code)
 ├── generate_data.py        # Sentetik veri oluşturma betiği (Data generation script)
+├── requirements.txt        # Gerekli Python paketleri (Required Python packages)
 └── README.md               # Bu dosya (This file)
 ```
 
 ## Gelecekteki Olası Geliştirmeler (Potential Future Enhancements)
 
-*   K-Means segmentlerine daha anlamlı isimler verme (ör. "Yüksek Değerli Oyuncular").
-*   Daha fazla segmentasyon ve filtreleme seçeneği ekleme.
-*   Grafiklere daha fazla etkileşim ekleme (ör. tıklayınca filtreleme).
-*   Daha gelişmiş makine öğrenimi modelleri entegre etme (ör. churn tahmini).
-*   Veritabanı entegrasyonu. 
+*   K-Means segmentlerine işlevsel isimler verme (ör. "Yüksek Harcama Yapan Aktif Oyuncular", "Sosyal Oyuncular").
+*   Daha fazla segmentasyon ve filtreleme seçeneği ekleme (ör. kayıt tarihine göre, belirli başarıları açanlara göre).
+*   Grafiklere daha fazla etkileşim ekleme (ör. grafikte bir bölüme tıklayınca diğer grafiklerin filtrelenmesi).
+*   Daha gelişmiş makine öğrenimi modelleri entegre etme (ör. Churn (terk etme) tahmini, LTV tahmini).
+*   Gerçek zamanlı veri akışı için veritabanı entegrasyonu.
+*   A/B testi sonuçlarını analiz etmek için modüller ekleme. 
