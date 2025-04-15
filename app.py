@@ -26,13 +26,15 @@ st.markdown("""
         border-radius: 5px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    /* Make metric labels visible */
-    .stMetric div[data-testid="stMetricLabel"] {
-        color: #333 !important; /* Dark grey color for label */
+    /* Ensure metric labels are visible */
+    .stMetric label {
+        color: #000 !important; /* Black color for label */
+        display: block !important; /* Ensure it's displayed */
+        opacity: 1 !important; /* Ensure it's not transparent */
     }
-    /* Make metric values visible */
+    /* Ensure metric values are visible */
     .stMetric div[data-testid="stMetricValue"] {
-        color: #333 !important; /* Dark grey color for value */
+        color: #000 !important; /* Black color for value */
     }
 </style>
 """, unsafe_allow_html=True)
