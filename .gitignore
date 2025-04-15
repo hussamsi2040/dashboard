@@ -1,0 +1,10 @@
+# Virtual environment
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Data files (instruct user to generate)
+# data/online_gaming_behavior_dataset.csv 
