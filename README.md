@@ -45,6 +45,10 @@ Bu proje, çevrimiçi oyun platformları için oyuncu davranışlarını, katıl
         *   Segment görselleştirmesi: Oluşturulan segmentlerin oynama süresi ve harcama gibi eksenlerde nasıl konumlandığını gösteren dağılım grafiği.
         *   Segment profilleri: Her bir segmentin ortalama metrik değerlerini gösteren özet tablo.
         *   Segment dağılımı: Toplam oyuncu tabanının segmentlere göre dağılımını gösteren pasta grafiği.
+    *   **A/B Test Analizi:**
+        *   Metrik seçimi: Kullanıcının analiz etmek istediği metriği (Dönüşüm Oranı, Ortalama Harcama, Ortalama Oynama Süresi vb.) seçmesine olanak tanır.
+        *   İstatistiksel Testler: Seçilen metriğe göre A ve B grupları arasında istatistiksel olarak anlamlı bir fark olup olmadığını belirlemek için uygun testleri (Oranlar için Ki-Kare, Ortalamalar için T-Testi) uygular.
+        *   Sonuç Gösterimi: Her grup için metrik değerlerini, aradaki farkı, p-değerini ve sonucun istatistiksel anlamlılığını net bir şekilde gösterir.
 *   **Filtreleme:** Tarih aralığı, oyun türü, oyun zorluğu, cihaz ve lokasyona (ilk 10 ve diğerleri) göre verileri filtreleme imkanı.
 *   **Veri İndirme:** Filtrelenmiş güncel verileri CSV formatında indirme butonu.
 *   **Türkçe Dil Desteği:** Panel arayüzü ve metrikler Türkçe olarak sunulmaktadır.

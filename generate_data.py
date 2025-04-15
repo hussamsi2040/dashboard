@@ -36,12 +36,24 @@ def generate_gaming_dataset(n_players=10000):
         'GameDifficulty': np.random.choice(difficulties, n_players, p=[0.3, 0.5, 0.2])
     }
     
+    # --- Add A/B Test Group Assignment ---
+    data['AB_Group'] = np.random.choice(['A', 'B'], n_players)
+    # -------------------------------------
+    
     # Generate monetization metrics
     data['HasPurchased'] = np.random.choice([0, 1], n_players, p=[0.85, 0.15])
     purchase_amounts = np.zeros(n_players)
     purchasers = data['HasPurchased'] == 1
     purchase_amounts[purchasers] = np.random.gamma(2, 15, purchasers.sum())
     data['TotalSpentUSD'] = purchase_amounts.round(2)
+    
+    # --- Simulate small uplift for Group B on spending ---
+    group_b_purchasers = (data['AB_Group'] == 'B') & purchasers
+    uplift_amount = np.random.uniform(0.5, 5, group_b_purchasers.sum()) # Small random uplift
+    data['TotalSpentUSD'][group_b_purchasers] += uplift_amount.round(2)
+    # Ensure no negative spending if base was 0 (though unlikely here)
+    data['TotalSpentUSD'] = np.maximum(0, data['TotalSpentUSD'])
+    # ---------------------------------------------------
     
     # Generate engagement metrics
     base_play_time = np.random.gamma(2, 5, n_players)

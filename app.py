@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
+import scipy.stats as stats # Add scipy for statistical tests
 
 # Page config
 st.set_page_config(
@@ -116,7 +117,8 @@ with st.sidebar:
         "Teknik Performans", 
         "Sosyal Analiz",      
         "Kohort Analizi",     
-        "Oyuncu Segmentasyonu" # New page
+        "Oyuncu Segmentasyonu", # New page
+        "A/B Test Analizi" # New A/B test page
     ]
     page = st.radio("Sayfa Seçin", pages)
 
@@ -728,8 +730,38 @@ elif page == "Oyuncu Segmentasyonu":
         # Add cluster labels to the filtered dataframe
         df_filtered_clustered = df_filtered.copy()
         df_filtered_clustered['Cluster'] = cluster_labels
-        # Map cluster labels to meaningful names (optional, based on analysis)
-        cluster_names = {i: f"Segment {i+1}" for i in range(n_clusters)}
+
+        # --- Define descriptive names based on cluster analysis ---
+        # Analyze the cluster_summary table printed below to refine these names!
+        # Example plausible mapping (adjust based on actual cluster_summary):
+        cluster_summary_for_naming = df_filtered_clustered.groupby('Cluster')[features].mean()
+        # Find cluster with highest spending -> 'Yüksek Değerli'
+        # Find cluster with lowest engagement -> 'Düşük Etkileşimli'
+        # Distinguish others based on playtime/spending balance.
+        # This requires inspecting the actual cluster_summary_for_naming output.
+        # For now, using placeholder logic for demonstration:
+        try:
+            high_spender_id = cluster_summary_for_naming['TotalSpentUSD'].idxmax()
+            low_engagement_id = cluster_summary_for_naming['PlayTimeHours'].idxmin() # Example proxy for low engagement
+            
+            temp_names = {}
+            temp_names[high_spender_id] = "Yüksek Değerli"
+            temp_names[low_engagement_id] = "Düşük Etkileşimli"
+            
+            remaining_ids = [i for i in range(n_clusters) if i not in temp_names]
+            if len(remaining_ids) > 0:
+                 # Example: Assign based on playtime for the remaining
+                 playtime_order = cluster_summary_for_naming.loc[remaining_ids, 'PlayTimeHours'].sort_values()
+                 temp_names[playtime_order.index[0]] = "Sıradan Oyuncu" # Lower playtime among remaining
+                 if len(remaining_ids) > 1:
+                     temp_names[playtime_order.index[1]] = "Aktif Harcamayan" # Higher playtime among remaining
+
+            # Ensure all clusters have names, default if logic failed
+            cluster_names = {i: temp_names.get(i, f"Segment {i+1}") for i in range(n_clusters)}
+        except Exception as e:
+            st.warning(f"Segment isimleri otomatik atanırken hata oluştu ({e}). Varsayılan isimler kullanılıyor.")
+            cluster_names = {i: f"Segment {i+1}" for i in range(n_clusters)} # Fallback
+            
         df_filtered_clustered['Segment'] = df_filtered_clustered['Cluster'].map(cluster_names)
         
         st.subheader("📊 Segmentlerin Görselleştirilmesi")
@@ -766,6 +798,209 @@ elif page == "Oyuncu Segmentasyonu":
             title='Oyuncu Sayısı Dağılımı'
         )
         st.plotly_chart(fig_segment_pie, use_container_width=True)
+
+# --- A/B Test Analysis Page (New) ---
+elif page == "A/B Test Analizi":
+    st.title("🧪 A/B Test Analizi")
+    st.info("Bu sayfa, A ve B grupları arasındaki metrik farklılıklarını istatistiksel olarak analiz eder.")
+
+    # Ensure AB_Group column exists
+    if 'AB_Group' not in df_filtered.columns:
+        st.error("Veri setinde 'AB_Group' sütunu bulunamadı. Lütfen 'generate_data.py' betiğini tekrar çalıştırıp veriyi güncelleyin.")
+        st.stop()
+
+    # --- Inputs ----
+    st.subheader("📊 Analiz Edilecek Metrik")
+    # Available metrics for comparison
+    metric_options = {
+        "Dönüşüm Oranı (HasPurchased)": "conversion",
+        "Ortalama Harcama (TotalSpentUSD)": "mean_spending",
+        "Ortalama Oynama Süresi (PlayTimeHours)": "mean_playtime",
+        # Add more metrics here if needed
+    }
+    selected_metric_label = st.selectbox("Metrik Seçin:", options=list(metric_options.keys()))
+    selected_metric = metric_options[selected_metric_label]
+
+    st.divider()
+
+    # --- Data Preparation ---
+    group_a = df_filtered[df_filtered['AB_Group'] == 'A']
+    group_b = df_filtered[df_filtered['AB_Group'] == 'B']
+
+    if len(group_a) == 0 or len(group_b) == 0:
+        st.warning("Filtrelenmiş veride A veya B grubunda yeterli kullanıcı bulunmuyor.")
+        st.stop()
+
+    # --- Perform Test and Display Results ---
+    st.subheader("📈 Test Sonuçları")
+    
+    alpha = 0.05 # Significance level
+
+    # Function to calculate Cohen's d
+    def cohen_d(x, y):
+        nx = len(x)
+        ny = len(y)
+        dof = nx + ny - 2
+        pooled_std = np.sqrt(((nx - 1) * np.std(x, ddof=1) ** 2 + (ny - 1) * np.std(y, ddof=1) ** 2) / dof)
+        # Handle potential zero standard deviation
+        if pooled_std == 0: return 0 
+        return (np.mean(x) - np.mean(y)) / pooled_std
+        
+    # Function to calculate Confidence Interval for mean difference
+    def mean_diff_ci(x, y, alpha=0.05):
+        se_x = stats.sem(x, nan_policy='omit') 
+        se_y = stats.sem(y, nan_policy='omit')
+        se_diff = np.sqrt(se_x**2 + se_y**2)
+        # Estimate degrees of freedom using Welch–Satterthwaite equation (approximation)
+        # Note: Scipy doesn't directly expose this for ttest_ind with equal_var=False, 
+        # so we use a simpler large-sample approximation with z-score or basic t-score.
+        # For a more precise calculation, libraries like statsmodels might be needed.
+        # Using a standard normal z-score for simplicity here (assumes large enough samples)
+        z_crit = stats.norm.ppf(1 - alpha/2)
+        diff = np.nanmean(y) - np.nanmean(x)
+        lower = diff - z_crit * se_diff
+        upper = diff + z_crit * se_diff
+        return lower, upper
+
+    try:
+        if selected_metric == "conversion":
+            # Compare conversion rates (HasPurchased)
+            conv_a = group_a['HasPurchased'].sum()
+            total_a = len(group_a)
+            rate_a = (conv_a / total_a) * 100 if total_a > 0 else 0
+            
+            conv_b = group_b['HasPurchased'].sum()
+            total_b = len(group_b)
+            rate_b = (conv_b / total_b) * 100 if total_b > 0 else 0
+
+            st.metric(label="Grup A Dönüşüm Oranı", value=f"{rate_a:.2f}%", delta=f"{conv_a:,} / {total_a:,}")
+            st.metric(label="Grup B Dönüşüm Oranı", value=f"{rate_b:.2f}%", delta=f"{conv_b:,} / {total_b:,}")
+            
+            # Chi-squared test
+            contingency_table = [
+                [conv_a, total_a - conv_a],
+                [conv_b, total_b - conv_b]
+            ]
+            chi2, p_value, _, _ = stats.chi2_contingency(contingency_table)
+            difference = rate_b - rate_a
+            result_text = f"Chi-kare Testi: p-değeri = {p_value:.4f}"
+            
+            # Effect size: Odds Ratio (approximate)
+            odds_a = conv_a / (total_a - conv_a) if (total_a - conv_a) > 0 else float('inf')
+            odds_b = conv_b / (total_b - conv_b) if (total_b - conv_b) > 0 else float('inf')
+            effect_size = odds_b / odds_a if odds_a > 0 and odds_a != float('inf') and odds_b != float('inf') else float('nan')
+            effect_label = f"Odds Oranı: {effect_size:.2f}" if not np.isnan(effect_size) else "Odds Oranı: Hesaplanamadı"
+            # Confidence interval for difference in proportions (using Normal approximation)
+            prop_a = conv_a / total_a
+            prop_b = conv_b / total_b
+            se_diff_prop = np.sqrt(prop_a * (1 - prop_a) / total_a + prop_b * (1 - prop_b) / total_b)
+            z_crit = stats.norm.ppf(1 - alpha/2)
+            ci_lower = (prop_b - prop_a) - z_crit * se_diff_prop
+            ci_upper = (prop_b - prop_a) + z_crit * se_diff_prop
+            ci_text = f"Fark Güven Aralığı (%): [{ci_lower*100:+.2f}%, {ci_upper*100:+.2f}%]"
+
+        elif selected_metric == "mean_spending":
+            # Compare mean TotalSpentUSD
+            mean_a = group_a['TotalSpentUSD'].mean()
+            mean_b = group_b['TotalSpentUSD'].mean()
+            std_a = group_a['TotalSpentUSD'].std()
+            std_b = group_b['TotalSpentUSD'].std()
+
+            st.metric(label="Grup A Ort. Harcama", value=f"${mean_a:.2f}", delta=f"Std: {std_a:.2f}")
+            st.metric(label="Grup B Ort. Harcama", value=f"${mean_b:.2f}", delta=f"Std: {std_b:.2f}")
+            
+            # T-test (assuming unequal variance - Welch's T-test)
+            t_stat, p_value = stats.ttest_ind(group_a['TotalSpentUSD'], group_b['TotalSpentUSD'], equal_var=False, nan_policy='omit')
+            difference = mean_b - mean_a
+            result_text = f"T-Testi (Welch): p-değeri = {p_value:.4f}"
+            
+            # Effect Size: Cohen's d
+            d = cohen_d(group_b['TotalSpentUSD'].dropna(), group_a['TotalSpentUSD'].dropna())
+            effect_label = f"Cohen's d: {d:.2f}"
+            # Confidence Interval for mean difference
+            ci_lower, ci_upper = mean_diff_ci(group_a['TotalSpentUSD'], group_b['TotalSpentUSD'], alpha)
+            ci_text = f"Fark Güven Aralığı ($): [${ci_lower:+.2f}, ${ci_upper:+.2f}]"
+
+        elif selected_metric == "mean_playtime":
+             # Compare mean PlayTimeHours
+            mean_a = group_a['PlayTimeHours'].mean()
+            mean_b = group_b['PlayTimeHours'].mean()
+            std_a = group_a['PlayTimeHours'].std()
+            std_b = group_b['PlayTimeHours'].std()
+
+            st.metric(label="Grup A Ort. Oynama Süresi", value=f"{mean_a:.2f} saat", delta=f"Std: {std_a:.2f}")
+            st.metric(label="Grup B Ort. Oynama Süresi", value=f"{mean_b:.2f} saat", delta=f"Std: {std_b:.2f}")
+            
+            # T-test (assuming unequal variance - Welch's T-test)
+            t_stat, p_value = stats.ttest_ind(group_a['PlayTimeHours'], group_b['PlayTimeHours'], equal_var=False, nan_policy='omit')
+            difference = mean_b - mean_a
+            result_text = f"T-Testi (Welch): p-değeri = {p_value:.4f}"
+            
+            # Effect Size: Cohen's d
+            d = cohen_d(group_b['PlayTimeHours'].dropna(), group_a['PlayTimeHours'].dropna())
+            effect_label = f"Cohen's d: {d:.2f}"
+            # Confidence Interval for mean difference
+            ci_lower, ci_upper = mean_diff_ci(group_a['PlayTimeHours'], group_b['PlayTimeHours'], alpha)
+            ci_text = f"Fark Güven Aralığı (saat): [{ci_lower:+.2f}, {ci_upper:+.2f}]"
+
+        else:
+            st.error("Seçilen metrik için analiz henüz uygulanmadı.")
+            st.stop()
+
+        # --- Interpretation ---
+        st.subheader("📝 Yorum")
+        
+        # Determine significance
+        is_significant = p_value < alpha
+        
+        # --- Build Interpretation String ---
+        interpretation = f"**Test Sonucu:** {result_text}. "
+        interpretation += f"Gözlemlenen fark (Grup B - Grup A): **{difference:+.2f}**"
+        if selected_metric == "conversion": interpretation += "%"
+        elif selected_metric == "mean_spending": interpretation += "$"
+        elif selected_metric == "mean_playtime": interpretation += " saat"
+        interpretation += ".\n\n"
+        
+        # Explain p-value
+        if is_significant:
+            interpretation += f"p-değeri ({p_value:.4f}), {alpha} anlamlılık seviyesinden küçük olduğu için, bu farkın **istatistiksel olarak anlamlı** olduğunu söyleyebiliriz. Bu, gözlemlenen farkın tamamen şans eseri ortaya çıkma olasılığının düşük olduğu anlamına gelir.\n\n"
+        else:
+            interpretation += f"p-değeri ({p_value:.4f}), {alpha} anlamlılık seviyesinden büyük olduğu için, bu farkın **istatistiksel olarak anlamlı olmadığını** söyleyebiliriz. Gözlemlenen fark şans eseri ortaya çıkmış olabilir.\n\n"
+            
+        # Explain Confidence Interval
+        interpretation += f"**Güven Aralığı (%{ (1-alpha)*100:.0f}):** {ci_text}. Bu aralık, deney tekrarlansa elde edilecek farkın %{ (1-alpha)*100:.0f} olasılıkla düşeceği aralığı tahmin eder.\n\n"
+        
+        # Explain Effect Size
+        interpretation += f"**Etki Büyüklüğü:** {effect_label}. "
+        try:
+            if selected_metric == "conversion" and not np.isnan(effect_size):
+                 if effect_size > 1:
+                     interpretation += f"Bu, Grup B'deki bir kullanıcının dönüşüm gerçekleştirme olasılığının, Grup A'dakine göre yaklaşık **{effect_size:.1f} kat daha fazla** olduğunu gösterir. "
+                 elif effect_size < 1 and effect_size > 0:
+                     interpretation += f"Bu, Grup B'deki bir kullanıcının dönüşüm gerçekleştirme olasılığının, Grup A'dakine göre yaklaşık **{1/effect_size:.1f} kat daha az** olduğunu gösterir. "
+                 else:
+                     interpretation += "Gruplar arasında dönüşüm olasılığı açısından anlamlı bir fark gözlenmemiştir. "
+            elif selected_metric in ["mean_spending", "mean_playtime"]:
+                abs_d = abs(d)
+                if abs_d < 0.2:
+                    interpretation += "Bu, etki büyüklüğünün **çok küçük** olduğunu gösterir. "
+                elif abs_d < 0.5:
+                    interpretation += "Bu, etki büyüklüğünün **küçük** olduğunu gösterir. "
+                elif abs_d < 0.8:
+                    interpretation += "Bu, etki büyüklüğünün **orta** düzeyde olduğunu gösterir. "
+                else:
+                    interpretation += "Bu, etki büyüklüğünün **büyük** olduğunu gösterir. "
+        except:
+             interpretation += "(Etki büyüklüğü yorumlanamadı). " # Fallback
+             
+        # --- Display Interpretation ---
+        if is_significant:
+            st.success(interpretation)
+        else:
+            st.warning(interpretation)
+            
+    except Exception as e:
+        st.error(f"A/B testi analizi sırasında bir hata oluştu: {e}")
 
 else:  # Achievement Tracking (ensure this is the last `elif` before the footer)
     st.title("🏆 Başarı Takibi")
